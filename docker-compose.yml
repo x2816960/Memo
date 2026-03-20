@@ -12,6 +12,7 @@ services:
       - ./backend/memo.db:/app/memo.db
     environment:
       - DATABASE_URL=sqlite:///./memo.db
+      - UPLOAD_DIR=/app/uploads
     restart: unless-stopped
 
   frontend:

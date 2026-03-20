@@ -10,12 +10,13 @@ from app.schemas.task import AttachmentResponse
 from app.services.task import get_attachments, delete_attachment, add_attachment
 from app.utils.security import get_current_user
 from app.models.user import User
-from app.models.attachment import AttachmentType
+from app.models.attachment import Attachment, AttachmentType
 from app.utils.config import get_config
 
 router = APIRouter(prefix="/api", tags=["attachments"])
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
+# Use environment variable or default to ./backend/uploads (for local development)
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads"))
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/avi", "video/quicktime", "video/x-matroska"}

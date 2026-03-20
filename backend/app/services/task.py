@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from typing import Optional, List, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException, status
 
 from app.models.task import Task, TaskPriority, TaskStatus
@@ -25,7 +25,7 @@ def get_tasks(
     skip: int = 0,
     limit: int = 20
 ) -> Tuple[List[Task], int]:
-    query = db.query(Task).filter(Task.user_id == user_id, Task.is_deleted == False)
+    query = db.query(Task).options(joinedload(Task.attachments)).filter(Task.user_id == user_id, Task.is_deleted == False)
 
     if status:
         query = query.filter(Task.status == status)
@@ -44,7 +44,7 @@ def get_tasks(
 
 
 def get_task_by_id(db: Session, task_id: int, user_id: int) -> Task:
-    task = db.query(Task).filter(Task.id == task_id, Task.user_id == user_id, Task.is_deleted == False).first()
+    task = db.query(Task).options(joinedload(Task.attachments)).filter(Task.id == task_id, Task.user_id == user_id, Task.is_deleted == False).first()
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

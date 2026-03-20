@@ -35,7 +35,7 @@ async def list_tasks(
     )
 
     return {
-        "tasks": tasks,
+        "tasks": [TaskResponse.model_validate(t) for t in tasks],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -52,7 +52,8 @@ async def create_new_task(
     new_task = create_task(
         db, current_user.id, task.title, task.description, task.priority, task.due_date
     )
-    return new_task
+    # Convert ORM model to Pydantic model for serialization
+    return TaskResponse.model_validate(new_task)
 
 
 @router.get("/stats", response_model=TaskStats)
@@ -69,7 +70,8 @@ async def get_single_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return get_task_by_id(db, task_id, current_user.id)
+    task = get_task_by_id(db, task_id, current_user.id)
+    return TaskResponse.model_validate(task)
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
@@ -80,7 +82,8 @@ async def update_single_task(
     db: Session = Depends(get_db)
 ):
     update_data = task_update.model_dump(exclude_unset=True)
-    return update_task(db, task_id, current_user.id, **update_data)
+    task = update_task(db, task_id, current_user.id, **update_data)
+    return TaskResponse.model_validate(task)
 
 
 @router.delete("/{task_id}")
@@ -100,7 +103,8 @@ async def change_task_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return update_task_status(db, task_id, current_user.id, status_update.status)
+    task = update_task_status(db, task_id, current_user.id, status_update.status)
+    return TaskResponse.model_validate(task)
 
 
 @router.put("/sort")

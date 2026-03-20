@@ -48,5 +48,9 @@ export const taskApi = {
 
   deleteAttachment(attachmentId) {
     return api.delete(`/attachments/${attachmentId}`)
+  },
+
+  getDownloadUrl(attachmentId) {
+    return `/api/attachments/${attachmentId}/download`
   }
 }

@@ -88,56 +88,95 @@
           class="task-list-inner"
         >
           <template #item="{ element }">
-            <div class="task-item" :class="{ overdue: isOverdue(element) }">
-              <div class="drag-handle">
-                <el-icon><rank /></el-icon>
-              </div>
+            <div class="task-wrapper">
+              <div class="task-item" :class="{ overdue: isOverdue(element) }">
+                <div class="drag-handle">
+                  <el-icon><rank /></el-icon>
+                </div>
 
-              <div class="task-content" @click="openEditDialog(element)">
-                <div class="task-title">{{ element.title }}</div>
-                <div class="task-desc" v-if="element.description">{{ element.description }}</div>
-              </div>
+                <div class="task-content" @click="openEditDialog(element)">
+                  <div class="task-title">{{ element.title }}</div>
+                  <div class="task-desc" v-if="element.description">{{ element.description }}</div>
+                </div>
 
-              <div class="task-priority">
-                <el-tag :type="getPriorityType(element.priority)" size="small">
-                  {{ getPriorityLabel(element.priority) }}
-                </el-tag>
-              </div>
-
-              <div class="task-status">
-                <el-dropdown @command="(status) => handleStatusChange(element.id, status)">
-                  <el-tag :type="getStatusType(element.status)" class="status-tag">
-                    {{ getStatusLabel(element.status) }}
-                    <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                <div class="task-priority">
+                  <el-tag :type="getPriorityType(element.priority)" size="small">
+                    {{ getPriorityLabel(element.priority) }}
                   </el-tag>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="todo" :disabled="!canChangeTo(element, 'todo')">待办</el-dropdown-item>
-                      <el-dropdown-item command="in_progress" :disabled="!canChangeTo(element, 'in_progress')">进行中</el-dropdown-item>
-                      <el-dropdown-item command="completed" :disabled="!canChangeTo(element, 'completed')">已完成</el-dropdown-item>
-                      <el-dropdown-item command="cancelled" :disabled="!canChangeTo(element, 'cancelled')">已取消</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+                </div>
+
+                <div class="task-status">
+                  <el-dropdown @command="(status) => handleStatusChange(element.id, status)">
+                    <el-tag :type="getStatusType(element.status)" class="status-tag">
+                      {{ getStatusLabel(element.status) }}
+                      <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    </el-tag>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="todo" :disabled="!canChangeTo(element, 'todo')">待办</el-dropdown-item>
+                        <el-dropdown-item command="in_progress" :disabled="!canChangeTo(element, 'in_progress')">进行中</el-dropdown-item>
+                        <el-dropdown-item command="completed" :disabled="!canChangeTo(element, 'completed')">已完成</el-dropdown-item>
+                        <el-dropdown-item command="cancelled" :disabled="!canChangeTo(element, 'cancelled')">已取消</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+
+                <div class="task-due" :class="{ 'is-overdue': isOverdue(element) }">
+                  <el-icon><calendar /></el-icon>
+                  {{ formatDueDate(element.due_date) }}
+                </div>
+
+                <div class="task-attachments" v-if="element.attachments?.length" @click.stop="toggleExpand(element.id)">
+                  <el-icon><paperclip /></el-icon>
+                  {{ element.attachments.length }}
+                  <el-icon class="expand-icon" :class="{ expanded: expandedTasks.has(element.id) }">
+                    <arrow-down />
+                  </el-icon>
+                </div>
+
+                <div class="task-actions">
+                  <el-button size="small" @click.stop="openEditDialog(element)">
+                    <el-icon><edit /></el-icon>
+                  </el-button>
+                  <el-button size="small" type="danger" @click.stop="handleDelete(element.id)">
+                    <el-icon><delete /></el-icon>
+                  </el-button>
+                </div>
               </div>
 
-              <div class="task-due" :class="{ 'is-overdue': isOverdue(element) }">
-                <el-icon><calendar /></el-icon>
-                {{ formatDueDate(element.due_date) }}
-              </div>
-
-              <div class="task-attachments" v-if="element.attachments?.length">
-                <el-icon><paperclip /></el-icon>
-                {{ element.attachments.length }}
-              </div>
-
-              <div class="task-actions">
-                <el-button size="small" @click.stop="openEditDialog(element)">
-                  <el-icon><edit /></el-icon>
-                </el-button>
-                <el-button size="small" type="danger" @click.stop="handleDelete(element.id)">
-                  <el-icon><delete /></el-icon>
-                </el-button>
+              <!-- Expanded Attachment View -->
+              <div v-if="expandedTasks.has(element.id)" class="task-expanded">
+                <div class="attachment-grid">
+                  <div v-for="att in element.attachments" :key="att.id" class="attachment-card">
+                    <!-- Image Preview -->
+                    <div v-if="att.file_type === 'image'" class="attachment-preview image-preview">
+                      <img v-if="attachmentUrls[att.id]" :src="attachmentUrls[att.id]" :alt="att.file_name" @click="openPreview(att)" />
+                      <div v-else class="loading-placeholder">加载中...</div>
+                    </div>
+                    <!-- Video Preview -->
+                    <div v-else-if="att.file_type === 'video'" class="attachment-preview video-preview">
+                      <video v-if="attachmentUrls[att.id]" :src="attachmentUrls[att.id]" controls />
+                      <div v-else class="loading-placeholder">加载中...</div>
+                    </div>
+                    <!-- Other File -->
+                    <div v-else class="attachment-preview file-preview">
+                      <el-icon><document /></el-icon>
+                      <span class="file-name">{{ att.file_name }}</span>
+                    </div>
+                    <div class="attachment-info">
+                      <span class="file-size">{{ formatFileSize(att.file_size) }}</span>
+                      <div class="attachment-actions">
+                        <el-button size="small" @click="downloadAttachment(att.id, att.file_name)">
+                          <el-icon><Download /></el-icon>
+                        </el-button>
+                        <el-button size="small" type="danger" @click="handleDeleteAttachmentFromTask(element.id, att.id)">
+                          <el-icon><delete /></el-icon>
+                        </el-button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -188,6 +227,9 @@
               <el-icon v-else-if="att.file_type === 'video'"><video-play /></el-icon>
               <el-icon v-else><document /></el-icon>
               <span>{{ att.file_name }}</span>
+              <el-button size="small" @click="downloadAttachment(att.id, att.file_name)">
+                <el-icon><Download /></el-icon>
+              </el-button>
               <el-button size="small" type="danger" @click="handleDeleteAttachment(att.id)">
                 <el-icon><delete /></el-icon>
               </el-button>
@@ -195,13 +237,18 @@
           </div>
           <el-upload
             ref="uploadRef"
-            :auto-upload="false"
+            :auto-upload="true"
             :limit="10"
             :on-exceed="handleUploadExceed"
             :http-request="handleFileUpload"
             accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
+            drag
           >
-            <el-button size="small">上传附件</el-button>
+            <div class="upload-drag-area">
+              <el-icon class="upload-icon"><UploadFilled /></el-icon>
+              <div>将文件拖到此处，或<em>点击上传</em></div>
+              <div class="upload-tip">支持图片、视频及常见文件格式</div>
+            </div>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -213,6 +260,11 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- Image Preview Dialog -->
+    <el-dialog v-model="previewVisible" title="图片预览" width="800px">
+      <img :src="previewUrl" style="max-width: 100%; display: block; margin: 0 auto;" />
+    </el-dialog>
   </div>
 </template>
 
@@ -223,6 +275,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import draggable from 'vuedraggable'
 import { useUserStore } from '@/stores/user'
 import { useTaskStore } from '@/stores/task'
+import api from '@/api/index'
 import { taskApi } from '@/api/tasks'
 
 const router = useRouter()
@@ -242,6 +295,16 @@ const isEdit = ref(false)
 const submitting = ref(false)
 const taskFormRef = ref()
 const uploadRef = ref()
+
+// Expanded tasks
+const expandedTasks = ref(new Set())
+
+// Preview
+const previewVisible = ref(false)
+const previewUrl = ref('')
+
+// Attachment blob URLs cache
+const attachmentUrls = ref({})
 
 const taskForm = reactive({
   id: null,
@@ -458,6 +521,115 @@ const getStatusLabel = (status) => {
 const canChangeTo = (task, targetStatus) => {
   return validTransitions[task.status]?.includes(targetStatus)
 }
+
+// Toggle task expanded state
+const toggleExpand = async (taskId) => {
+  if (expandedTasks.value.has(taskId)) {
+    expandedTasks.value.delete(taskId)
+  } else {
+    expandedTasks.value.add(taskId)
+    // Load blob URLs for attachments
+    const task = localTasks.value.find(t => t.id === taskId)
+    if (task?.attachments) {
+      for (const att of task.attachments) {
+        if (att.file_type === 'image' || att.file_type === 'video') {
+          if (!attachmentUrls.value[att.id]) {
+            try {
+              const blobUrl = await getAttachmentBlobUrl(att.id)
+              attachmentUrls.value[att.id] = blobUrl
+              attachmentUrls.value = { ...attachmentUrls.value }
+            } catch (e) {
+              console.error('Failed to load attachment:', e)
+            }
+          }
+        }
+      }
+    }
+  }
+  expandedTasks.value = new Set(expandedTasks.value)
+}
+
+// Get attachment URL for display
+const getAttachmentUrl = (attachmentId) => {
+  return taskApi.getDownloadUrl(attachmentId)
+}
+
+// Get attachment as blob URL for img/video tags
+const getAttachmentBlobUrl = async (attachmentId) => {
+  const token = localStorage.getItem('token')
+  const response = await fetch(`/api/attachments/${attachmentId}/download`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+  if (!response.ok) {
+    throw new Error('Failed to load attachment')
+  }
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
+}
+
+// Download attachment
+const downloadAttachment = async (attachmentId, fileName) => {
+  try {
+    const token = localStorage.getItem('token')
+    const response = await fetch(`/api/attachments/${attachmentId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    if (!response.ok) {
+      throw new Error('Download failed')
+    }
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('下载失败')
+  }
+}
+
+// Format file size
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// Open image preview
+const openPreview = (att) => {
+  if (att.file_type === 'image') {
+    // Use the blob URL that was already loaded with auth header
+    previewUrl.value = attachmentUrls.value[att.id] || getAttachmentUrl(att.id)
+    previewVisible.value = true
+  }
+}
+
+// Delete attachment from task (in expanded view)
+const handleDeleteAttachmentFromTask = async (taskId, attId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个附件吗？', '提示', { type: 'warning' })
+    await taskApi.deleteAttachment(attId)
+    const taskIndex = localTasks.value.findIndex(t => t.id === taskId)
+    if (taskIndex !== -1) {
+      const task = localTasks.value[taskIndex]
+      task.attachments = task.attachments.filter(a => a.id !== attId)
+    }
+    ElMessage.success('附件已删除')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -571,6 +743,11 @@ const canChangeTo = (task, targetStatus) => {
   gap: 10px;
 }
 
+.task-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
 .task-item {
   display: flex;
   align-items: center;
@@ -642,6 +819,15 @@ const canChangeTo = (task, targetStatus) => {
   display: flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.task-attachments:hover {
+  background: #f5f7fa;
+  color: #409eff;
 }
 
 .task-actions {
@@ -673,5 +859,135 @@ const canChangeTo = (task, targetStatus) => {
 
 .attachment-item span {
   flex: 1;
+}
+
+/* Expand icon */
+.expand-icon {
+  margin-left: 4px;
+  transition: transform 0.3s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Task expanded area */
+.task-expanded {
+  padding: 15px;
+  background: #fafafa;
+  border-top: 1px solid #ebeef5;
+  margin-top: -5px;
+  border-radius: 0 0 8px 8px;
+}
+
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.attachment-card {
+  background: white;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.attachment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-preview {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  overflow: hidden;
+}
+
+.attachment-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.attachment-preview video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.attachment-preview.file-preview {
+  flex-direction: column;
+  gap: 8px;
+  color: #909399;
+}
+
+.attachment-preview.file-preview .file-name {
+  font-size: 12px;
+  text-align: center;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.attachment-info {
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #909399;
+}
+
+.attachment-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Upload drag area */
+.upload-drag-area {
+  padding: 20px;
+  text-align: center;
+}
+
+.upload-icon {
+  font-size: 32px;
+  color: #909399;
+  margin-bottom: 10px;
+}
+
+.upload-drag-area div {
+  color: #606266;
+}
+
+.upload-drag-area em {
+  color: #409eff;
+  font-style: normal;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+.loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #909399;
+  font-size: 13px;
 }
 </style>
