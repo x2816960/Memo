@@ -5,6 +5,9 @@
 
 set -e
 
+# 获取脚本所在目录的绝对路径
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "========================================="
 echo "  Memo 安装脚本"
 echo "========================================="
@@ -17,9 +20,8 @@ detect_ubuntu_version() {
             echo "错误: 此脚本仅支持 Ubuntu 系统"
             exit 1
         fi
-        VERSION_ID="${VERSION_ID:0:2}"
-        echo "检测到 Ubuntu ${VERSION_ID}.04"
-        return "$VERSION_ID"
+        DETECTED_VERSION="${VERSION_ID:0:2}"
+        echo "检测到 Ubuntu ${DETECTED_VERSION}.04"
     else
         echo "错误: 无法检测系统版本"
         exit 1
@@ -55,7 +57,7 @@ install_nodejs() {
 # 安装后端依赖
 install_backend() {
     echo "安装后端依赖..."
-    cd "$(dirname "$0")/backend"
+    cd "$SCRIPT_DIR/backend"
 
     python3 -m venv venv
     source venv/bin/activate
@@ -69,7 +71,7 @@ install_backend() {
 # 安装前端依赖
 install_frontend() {
     echo "安装前端依赖..."
-    cd "$(dirname "$0")/frontend"
+    cd "$SCRIPT_DIR/frontend"
 
     npm install
     echo "前端依赖安装完成"
@@ -78,7 +80,7 @@ install_frontend() {
 # 创建必要的目录
 create_directories() {
     echo "创建必要的目录..."
-    cd "$(dirname "$0")"
+    cd "$SCRIPT_DIR"
 
     mkdir -p backend/uploads
     mkdir -p backend/logs
@@ -93,14 +95,14 @@ start_services() {
     echo "========================================="
     echo ""
     echo "启动后端服务..."
-    cd "$(dirname "$0")/backend"
+    cd "$SCRIPT_DIR/backend"
     source venv/bin/activate
     nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > logs/app.log 2>&1 &
     echo "后端服务已启动 (端口 8000)"
 
     echo ""
     echo "启动前端服务..."
-    cd "$(dirname "$0")/frontend"
+    cd "$SCRIPT_DIR/frontend"
     nohup npm run dev -- --host 0.0.0.0 --port 5173 > ../backend/logs/frontend.log 2>&1 &
     echo "前端服务已启动 (端口 5173)"
 

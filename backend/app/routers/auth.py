@@ -32,13 +32,6 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     return TokenResponse(access_token=token)
 
 
-@router.post("/login", response_model=TokenResponse)
-async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    token = create_user_token(user, False)
-    return TokenResponse(access_token=token)
-
-
 @router.post("/logout")
 async def logout(current_user: User = Depends(get_current_user)):
     return {"message": "Successfully logged out"}
