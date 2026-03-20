@@ -133,6 +133,9 @@ memo/
 ├── install.sh             # 一键安装脚本
 ├── start.sh              # 启动服务脚本
 ├── stop.sh               # 停止服务脚本
+├── scripts/              # 工具脚本目录
+│   ├── backup_db.sh      # 数据库备份脚本
+│   └── restore_db.sh    # 数据库恢复脚本
 ├── docker-compose.yml
 └── README.md
 ```
@@ -144,6 +147,8 @@ memo/
 | install.sh | 首次部署安装脚本，安装依赖、创建目录、启动服务 |
 | start.sh | 启动后端和前端服务 |
 | stop.sh | 停止所有相关服务 |
+| scripts/backup_db.sh | 备份数据库脚本，自动备份到 backpups 目录 |
+| scripts/restore_db.sh | 恢复数据库脚本，从备份文件恢复数据库 |
 
 ## 服务端口
 
