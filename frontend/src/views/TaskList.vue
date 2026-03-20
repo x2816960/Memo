@@ -14,7 +14,12 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="settings">个人设置</el-dropdown-item>
-              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              <template v-if="userStore.isAdmin">
+                <el-dropdown-item command="admin-stats" divided>统计中心</el-dropdown-item>
+                <el-dropdown-item command="admin-users">用户管理</el-dropdown-item>
+                <el-dropdown-item command="admin-config">系统配置</el-dropdown-item>
+              </template>
+              <el-dropdown-item command="logout" :divided="!userStore.isAdmin">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -65,11 +70,6 @@
         <el-button type="primary" @click="openCreateDialog">
           <el-icon><plus /></el-icon>
           新建任务
-        </el-button>
-
-        <el-button v-if="userStore.isAdmin" type="info" @click="$router.push('/admin/stats')">
-          <el-icon><data-analysis /></el-icon>
-          管理后台
         </el-button>
       </div>
 
@@ -272,12 +272,18 @@ onMounted(async () => {
   await taskStore.fetchTasks()
 })
 
-const handleCommand = (command) => {
+const handleCommand = async (command) => {
   if (command === 'settings') {
     router.push('/settings')
   } else if (command === 'logout') {
-    userStore.logout()
+    await userStore.logout()
     router.push('/login')
+  } else if (command === 'admin-stats') {
+    router.push('/admin/stats')
+  } else if (command === 'admin-users') {
+    router.push('/admin/users')
+  } else if (command === 'admin-config') {
+    router.push('/admin/config')
   }
 }
 

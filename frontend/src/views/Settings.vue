@@ -56,10 +56,12 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/api/auth'
 
+const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
 const editing = ref(false)
@@ -112,6 +114,7 @@ const handleChangePassword = async () => {
     passwordForm.oldPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
+    router.push('/tasks')
   } catch (error) {
     // Error handled by interceptor
   } finally {

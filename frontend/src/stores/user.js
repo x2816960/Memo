@@ -35,16 +35,13 @@ export const useUserStore = defineStore('user', {
     },
 
     async logout() {
-      try {
-        await authApi.logout()
-      } catch (e) {
-        // Ignore logout errors
-      }
+      // Clear local state
       this.user = null
       this.token = ''
       this.isLoggedIn = false
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      // No need to call API - backend doesn't maintain session state
     },
 
     async changePassword(oldPassword, newPassword) {

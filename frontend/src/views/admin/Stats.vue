@@ -7,6 +7,11 @@
         </el-button>
         <h1>系统统计</h1>
       </div>
+      <div class="header-nav">
+        <el-button text type="primary">统计中心</el-button>
+        <el-button text @click="$router.replace('/admin/users')">用户管理</el-button>
+        <el-button text @click="$router.replace('/admin/config')">系统配置</el-button>
+      </div>
     </div>
 
     <div class="main-content">
@@ -50,11 +55,6 @@
           </div>
         </div>
       </el-card>
-
-      <div class="quick-links" style="margin-top: 20px">
-        <el-button type="primary" @click="$router.push('/admin/users')">用户管理</el-button>
-        <el-button type="primary" @click="$router.push('/admin/config')">系统配置</el-button>
-      </div>
     </div>
   </div>
 </template>
@@ -121,6 +121,11 @@ onMounted(async () => {
 .header h1 {
   font-size: 20px;
   margin: 0;
+}
+
+.header-nav {
+  display: flex;
+  gap: 10px;
 }
 
 .main-content {

@@ -7,6 +7,11 @@
         </el-button>
         <h1>系统配置</h1>
       </div>
+      <div class="header-nav">
+        <el-button text @click="$router.replace('/admin/stats')">统计中心</el-button>
+        <el-button text @click="$router.replace('/admin/users')">用户管理</el-button>
+        <el-button text type="primary">系统配置</el-button>
+      </div>
     </div>
 
     <div class="main-content">
@@ -116,6 +121,11 @@ const handleSaveConfig = async () => {
 .header h1 {
   font-size: 20px;
   margin: 0;
+}
+
+.header-nav {
+  display: flex;
+  gap: 10px;
 }
 
 .main-content {
